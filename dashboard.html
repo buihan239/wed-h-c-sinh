@@ -3,65 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Phân Tích Hành Vi Học Tập AI</title>
+    <title>Chat Với Trợ Lý Học Tập AI</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; background-color: #f4f6f9; }
-        .sidebar { width: 250px; background-color: #1e293b; color: white; height: 100vh; padding: 20px; box-sizing: border-box; }
-        .sidebar h3 { text-align: center; margin-bottom: 30px; color: #38bdf8; }
-        .menu-btn { width: 100%; padding: 12px; background: none; border: none; color: #cbd5e1; text-align: left; font-size: 16px; cursor: pointer; border-radius: 6px; margin-bottom: 10px; }
-        .menu-btn:hover, .menu-btn.active { background-color: #334155; color: white; }
-        .main-content { flex: 1; padding: 30px; box-sizing: border-box; }
-        .chat-box { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: 70vh; display: flex; flex-direction: column; }
-        .chat-messages { flex: 1; padding: 20px; overflow-y: auto; border-bottom: 1px solid #e2e8f0; }
-        .message { margin-bottom: 15px; padding: 10px 15px; border-radius: 8px; max-width: 70%; line-height: 1.5; }
-        .user-msg { background-color: #0ea5e9; color: white; align-self: flex-end; margin-left: auto; }
-        .ai-msg { background-color: #f1f5f9; color: #1e293b; align-self: flex-start; }
-        .chat-input-area { padding: 15px; display: flex; gap: 10px; }
-        .chat-input-area input { flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 15px; }
-        .chat-input-area button { padding: 12px 24px; background-color: #0ea5e9; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .chat-input-area button:hover { background-color: #0284c7; }
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; display: flex; height: 100vh; }
+        
+        /* Thanh menu bên trái */
+        .sidebar { width: 260px; background-color: #1e293b; color: white; display: flex; flex-direction: column; padding: 20px 0; }
+        .sidebar h2 { font-size: 18px; padding: 0 20px; margin-bottom: 30px; color: #38bdf8; }
+        .menu-item { padding: 12px 20px; color: #cbd5e1; text-decoration: none; display: block; font-size: 15px; transition: 0.2s; }
+        .menu-item:hover, .menu-item.active { background-color: #0f172a; color: white; border-left: 4px solid #38bdf8; }
+
+        /* Khung nội dung bên phải */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .welcome-text { font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 20px; }
+        
+        .chat-container { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 850px; }
+        .chat-box { height: 400px; overflow-y: auto; border: 1px solid #e0e0e0; padding: 15px; border-radius: 8px; background: #fafafa; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .message { padding: 10px 14px; border-radius: 8px; max-width: 80%; line-height: 1.5; font-size: 15px; word-wrap: break-word; }
+        .message.ai { background: #e3f2fd; color: #0d47a1; align-self: flex-start; border-left: 4px solid #1976d2; }
+        .message.user { background: #007bff; color: white; align-self: flex-end; }
+        .subject-tag { background: #1565c0; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        
+        .input-group { display: flex; gap: 10px; }
+        input[type="text"] { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        button { padding: 12px 24px; background: #0084ff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        button:hover { background: #006kd2; }
     </style>
 </head>
 <body>
 
-    <!-- Thanh Menu Bên Trái (Bước 2) -->
+    <!-- Thanh Menu Bên Trái -->
     <div class="sidebar">
-        <h3>HỆ THỐNG KHKT</h3>
-        <button class="menu-btn active">💬 Chat với AI</button>
-        <button class="menu-btn">📚 Học với Notebook</button>
-        <button class="menu-btn">📄 Upload PDF</button>
-        <button class="menu-btn">📊 Phân tích hành vi</button>
-        <button class="menu-btn">👤 Hồ sơ</button>
+        <h2>HỆ THỐNG KHKT</h2>
+        <a href="#" class="menu-item active">Chat với Trợ lý Học tập AI</a>
+        <a href="#" class="menu-item">Học với Notebook</a>
+        <a href="#" class="menu-item">Upload PDF</a>
+        <a href="#" class="menu-item">Phân tích hành vi</a>
+        <a href="#" class="menu-item">Hồ sơ</a>
     </div>
 
-    <!-- Vùng Nội Dung Chính: Giao diện Chat AI (Bước 3) -->
+    <!-- Nội Dung Bên Phải -->
     <div class="main-content">
-        <h2 id="welcome-text">Xin chào học sinh!</h2>
-        <div class="chat-box">
-            <div class="chat-messages" id="chat-messages">
-                <div class="message ai-msg">Xin chào! Mình có thể giúp gì cho bạn trong buổi học hôm nay?</div>
+        <div class="welcome-text">Xin chào học sinh: LE N (12A1 - THPT LE KHIET)</div>
+        
+        <div class="chat-container">
+            <h3 style="margin-top: 0; color: #333;">Trợ Lý Sư Phạm AI</h3>
+            
+            <div class="chat-box" id="chatBox">
+                <div class="message ai">
+                    <span class="subject-tag">Hệ thống</span><br>
+                    Chào bạn! Mình là Trợ lý Sư phạm. Bạn đang gặp khó khăn ở bài tập hay câu hỏi nào, hãy nhập vào đây nhé! 🌟
+                </div>
             </div>
-            <div class="chat-input-area">
-                <input type="text" id="user-input" placeholder="Nhập câu hỏi học tập tại đây... (Ví dụ: Giải thích định luật Ôm)">
-                <button onclick="guiCauHoiAI()">Gửi đi</button>
+
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="Nhập câu hỏi học tập tại đây... (Ví dụ: Giải thích định luật Ôm)" onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()">Gửi đi</button>
             </div>
         </div>
     </div>
 
-    <!-- Dùng chung file index.js cũ để xử lý logic chat -->
-    <script src="index.js"></script>
-    <script>
-        // Khi trang web tải xong, tự động đọc tên học sinh để hiển thị lời chào
-        async function taiThongTin() {
-            try {
-                const res = await fetch('/api/student-info');
-                if (res.ok) {
-                    const data = await res.json();
-                    document.getElementById('welcome-text').innerText = `Xin chào học sinh: ${data.ho_ten} (${data.lop} - ${data.truong})`;
-                }
-            } catch (e) { console.log(e); }
+<script>
+    async function sendMessage() {
+        const inputField = document.getElementById('userInput');
+        const chatBox = document.getElementById('chatBox');
+        const messageText = inputField.value.trim();
+
+        if (messageText === '') return;
+
+        const userDiv = document.createElement('div');
+        userDiv.className = 'message user';
+        userDiv.innerHTML = `<b>Em:</b> ${messageText}`;
+        chatBox.appendChild(userDiv);
+
+        inputField.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        const aiDiv = document.createElement('div');
+        aiDiv.className = 'message ai';
+        aiDiv.innerHTML = `<span class="subject-tag">AI</span><br><i>Đang suy nghĩ...</i>`;
+        chatBox.appendChild(aiDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const response = await fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: messageText })
+            });
+
+            const data = await response.json();
+            aiDiv.innerHTML = `<span class="subject-tag">AI</span><br>${data.reply.replace(/\n/g, '<br>')}`;
+        } catch (error) {
+            aiDiv.innerHTML = `<span class="subject-tag" style="background:#d32f2f">Lỗi</span><br>Không thể kết nối máy chủ Python!`;
         }
-        taiThongTin();
-    </script>
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            sendMessage();
+        }
+    }
+</script>
+
 </body>
 </html>
