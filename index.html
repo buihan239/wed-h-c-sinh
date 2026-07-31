@@ -2,28 +2,53 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng Nhập Hệ Thống Học Tập AI</title>
-    <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f0f2f5; margin: 0; }
-        .login-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 320px; }
-        h2 { text-align: center; color: #333; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-    </style>
+    <title>Đăng Nhập Hệ Thống</title>
 </head>
-<body>
+<body style="font-family: Arial, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
 
-<div class="login-container">
-    <h2>ĐĂNG NHẬP HỆ THỐNG</h2>
-    <input type="text" id="hoTen" placeholder="Nhập Họ và Tên" required>
-    <input type="text" id="lop" placeholder="Nhập Lớp (Ví dụ: 12A1)" required>
-    <input type="text" id="truong" placeholder="Nhập Trường THPT" required>
-    <button onclick="xuLyDangNhap()">Đăng Nhập</button>
-</div>
+    <div style="background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 320px; text-align: center;">
+        <h2 style="color: #333; margin-bottom: 20px;">ĐĂNG NHẬP HỆ THỐNG</h2>
+        
+        <!-- Các ô nhập liệu được đặt ID chuẩn xác -->
+        <input type="text" id="hoten" placeholder="HỌ VÀ TÊN" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+        <input type="text" id="lop" placeholder="LỚP" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+        <input type="text" id="truong" placeholder="TRƯỜNG" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+        
+        <!-- Nút bấm gọi hàm chuẩn xác -->
+        <button onclick="dangNhap()" style="width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">Đăng Nhập</button>
+    </div>
 
-<!-- Kết nối với file xử lý index.js -->
-<script src="index.js"></script>
+    <!-- Đoạn mã xử lý gửi dữ liệu lên Python Server -->
+    <script>
+        async function dangNhap() {
+            const ho_ten = document.getElementById('hoten').value.trim();
+            const lop = document.getElementById('lop').value.trim();
+            const truong = document.getElementById('truong').value.trim();
+
+            if (!ho_ten || !lop || !truong) {
+                alert("Vui lòng điền đầy đủ thông tin đăng nhập!");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ho_ten: ho_ten, lop: lop, truong: truong })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === "success") {
+                    // Đăng nhập thành công sẽ nhảy ngay sang giao diện Chat
+                    window.location.href = "/dashboard.html";
+                } else {
+                    alert(data.detail || "Đăng nhập thất bại!");
+                }
+            } catch (error) {
+                alert("Lỗi kết nối đến máy chủ Python!");
+            }
+        }
+    </script>
 </body>
 </html>

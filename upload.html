@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chia Sẻ Tài Liệu - Kho Học Liệu Nội Bộ</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f4f6f8; margin: 0; display: flex; height: 100vh; }
+        
+        .sidebar { width: 260px; background-color: #0f172a; color: white; display: flex; flex-direction: column; padding: 20px 15px; }
+        .sidebar h3 { color: #ffffff; font-size: 18px; font-weight: bold; margin-bottom: 25px; text-align: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 15px; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar li { margin-bottom: 8px; }
+        .sidebar a { color: #cbd5e1; text-decoration: none; display: flex; align-items: center; gap: 10px; padding: 12px 15px; border-radius: 8px; font-size: 15px; font-weight: 500; transition: all 0.3s ease; }
+        .sidebar a:hover { background-color: #1e293b; color: #ffffff; }
+        .sidebar a.active { background-color: #2563eb; color: #ffffff; font-weight: bold; }
+
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .welcome-text { font-size: 20px; font-weight: bold; color: #1e293b; margin-bottom: 20px; }
+        
+        .upload-container { background: white; border-radius: 10px; padding: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 850px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #333; }
+        input[type="file"] { display: block; padding: 10px; border: 2px dashed #cbd5e1; width: 100%; border-radius: 8px; background: #f8fafc; cursor: pointer; }
+        
+        button { padding: 12px 24px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
+        button:hover { background: #1d4ed8; }
+
+        .file-list { margin-top: 25px; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px; }
+        .badge-pending { background: #f59e0b; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .badge-approved { background: #16a34a; color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-msg { margin-top: 15px; font-weight: bold; color: #16a34a; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h3>HỌC THÔNG MINH VỚI AI</h3>
+        <ul>
+            <li><a href="/">💬 Chat với Trợ lý AI</a></li>
+            <li><a href="/notebook.html">📖 Học với Notebook</a></li>
+            <li><a href="/upload.html" class="active">📁 Chia Sẻ Tài Liệu</a></li>
+            <li><a href="/analytics.html">📊 Phân tích hành vi</a></li>
+            <li><a href="/profile.html">👤 Hồ sơ</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="welcome-text">Kho Học Liệu Nội Bộ - Chia Sẻ Tài Liệu</div>
+        
+        <div class="upload-container">
+            <h3 style="margin-top: 0; color: #1e293b;">Đóng góp tài liệu học tập (PDF / Word)</h3>
+            <p style="color: #64748b; font-size: 14px;">Mọi học sinh và giáo viên đều có thể chia sẻ tài liệu. Tài liệu gửi lên sẽ được bộ phận kiểm duyệt xem xét trước khi đưa vào kho tri thức chung của trường.</p>
+            
+            <form id="uploadForm" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="pdfFile">Chọn tệp tài liệu (.pdf hoặc .docx):</label>
+                    <input type="file" id="pdfFile" name="file" accept=".pdf,.docx" required>
+                </div>
+                <button type="submit">Tải tài liệu lên để kiểm duyệt</button>
+            </form>
+
+            <div id="statusMsg" class="status-msg"></div>
+        </div>
+
+        <div class="upload-container file-list">
+            <h3 style="margin-top: 0; color: #1e293b;">Trạng thái tài liệu đã chia sẻ</h3>
+            <div id="uploadedFilesContainer">
+                <p style="color: #94a3b8; font-style: italic;">Đang tải danh sách...</p>
+            </div>
+        </div>
+    </div>
+
+<script>
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('pdfFile');
+        const statusMsg = document.getElementById('statusMsg');
+        
+        if (fileInput.files.length === 0) return;
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        statusMsg.style.color = '#2563eb';
+        statusMsg.innerText = 'Đang gửi tài liệu lên hệ thống...';
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await response.json();
+            
+            if (response.ok) {
+                statusMsg.style.color = '#16a34a';
+                statusMsg.innerText = 'Gửi thành công! Tài liệu đang ở trạng thái chờ kiểm duyệt.';
+                fileInput.value = '';
+                loadFileList();
+            } else {
+                statusMsg.style.color = '#dc2626';
+                statusMsg.innerText = 'Lỗi: ' + result.error;
+            }
+        } catch (error) {
+            statusMsg.style.color = '#dc2626';
+            statusMsg.innerText = 'Không thể kết nối đến máy chủ!';
+        }
+    });
+
+    async function loadFileList() {
+        try {
+            const response = await fetch('/api/files');
+            const files = await response.json();
+            const container = document.getElementById('uploadedFilesContainer');
+            
+            if (files.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8; font-style: italic;">Chưa có tài liệu nào được chia sẻ.</p>';
+                return;
+            }
+
+            container.innerHTML = files.map(item => `
+                <div class="file-item">
+                    <span>📄 <b>${item.filename}</b></span>
+                    <span>
+                        ${item.status === 'approved' 
+                            ? '<span class="badge-approved">Đã kiểm duyệt (Chính thức)</span>' 
+                            : '<span class="badge-pending">Đang chờ kiểm duyệt</span>'}
+                    </span>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error('Không thể tải danh sách file');
+        }
+    }
+
+    loadFileList();
+</script>
+
+</body>
+</html>
