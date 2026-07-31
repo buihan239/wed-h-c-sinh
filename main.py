@@ -140,24 +140,25 @@ def chat():
         - XỬ LÝ KHI HỌC SINH BÍ: Nếu học sinh trả lời là "không biết", "ko biết", lúng túng hoặc yêu cầu đáp án, BẠN PHẢI TỰ CHỦ ĐỘNG GIẢNG DẢI rõ ràng và đưa ra kiến thức/đáp án cụ thể ngay lập tức, tuyệt đối không tiếp tục hỏi vặn lại.
         - Phong cách: Ngôn ngữ sư phạm ân cần, khích lệ, chuẩn xác theo đặc thù môn {selected_subject}.
         """
-# 4. Xây dựng payload đầy đủ gồm System Prompt + Lịch sử hội thoại + Câu hỏi mới nhất
+# 4. Xây dựng payload an toàn tuyệt đối
         messages_payload = [{"role": "system", "content": system_prompt}]
         
-        # Nạp toàn bộ lịch sử trước đó vào để AI có bộ nhớ
-        for turn in history:
-            messages_payload.append(turn)
+        # Nạp lịch sử hội thoại gần nhất (tối đa 6 tin nhắn) để AI có bộ nhớ
+        safe_history = history[-6:] if len(history) >= 6 else history
+        for turn in safe_history:
+            if isinstance(turn, dict) and "role" in turn and "content" in turn:
+                messages_payload.append(turn)
             
-        # Nạp câu hỏi hiện tại
+        # Nạp câu hỏi hiện tại của học sinh
         messages_payload.append({"role": "user", "content": raw_message})
 
-        # 5. Gọi API Groq với mô hình mạnh mẽ và bộ nhớ đầy đủ
+        # 5. Gọi API Groq
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages_payload,
             temperature=0.4,
             max_tokens=1500
         )
-        
         reply_text = completion.choices[0].message.content
 
         # 6. Cập nhật lịch sử hội thoại
