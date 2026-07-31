@@ -2,5 +2,5 @@ services:
   - type: web
     name: web-cua-thay
     runtime: python
-    buildCommand: py -m pip install -r requirements.txt
-    startCommand: py -m uvicorn main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
