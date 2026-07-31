@@ -121,6 +121,7 @@ def chat():
     - Trò chuyện tự nhiên, trực tiếp đi thẳng vào nội dung học sinh đang hỏi hoặc trả lời. KHÔNG lặp lại câu chào hay câu xác nhận môn học ở đầu mỗi câu trả lời.
     - Chuẩn ngữ cảnh môn {selected_subject}.
     - Trả lời cực kỳ ngắn gọn (dưới 70 từ), ngôn ngữ sư phạm ân cần, động viên.
+    - Nếu học sinh trả lời là "không biết", "ko biết" hoặc lúng túng, bạn PHẢI chủ động giải thích rõ ràng và đưa ra đáp án/gợi ý cụ thể ngay lập tức, tuyệt đối không tiếp tục hỏi vặn lại học sinh.
     - Luôn kết thúc bằng DUY NHẤT 1 CÂU HỎI gợi mở để học sinh tự suy nghĩ. Tuyệt đối không giải hộ đáp án.
     """
 
