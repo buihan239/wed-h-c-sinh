@@ -85,6 +85,47 @@
     color: #ffffff !important;
     font-weight: bold;
 }
+   /* Tối ưu giao diện cho điện thoại màn hình nhỏ */
+@media screen and (max-width: 768px) {
+    /* Cho phép toàn bộ trang web hiển thị theo chiều dọc, không bị tràn ngang */
+    body {
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+    }
+    
+    /* Thu gọn hoặc ẩn thanh menu trái trên điện thoại */
+    .sidebar {
+        width: 100% !important;
+        height: auto !important;
+        position: relative !important;
+        padding: 10px !important;
+    }
+    
+    .sidebar ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        justify-content: center;
+    }
+    
+    .sidebar li {
+        margin-bottom: 0 !important;
+    }
+    
+    .sidebar a, .sidebar span {
+        padding: 8px 10px !important;
+        font-size: 13px !important;
+    }
+    
+    /* Mở rộng khung chat chiếm trọn màn hình điện thoại */
+    .main-content, .chat-container, container {
+        width: 100% !important;
+        padding: 10px !important;
+        margin: 0 !important;
+    }
+} 
     </style>
 </head>
 <body>
