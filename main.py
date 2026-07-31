@@ -172,7 +172,9 @@ def analytics():
 @app.route('/profile.html')
 def profile():
     return render_template('profile.html')
-
+@app.route('/dashboard.html')
+def dashboard():
+    return render_template('dashboard.html')
 # Đảm bảo đoạn này luôn nằm ở cuối cùng của file main.py
 if __name__ == '__main__':
     import os
