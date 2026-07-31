@@ -1,101 +1,156 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, RedirectResponse
-from pydantic import BaseModel
-from google import genai
-import json
-import os
+from flask import Flask, render_template, request, jsonify
+from groq import Groq
 
-app = FastAPI()
+app = Flask(__name__, template_folder='.')
 
-# CẤU HÌNH GEMINI AI (Hãy thay bằng API Key thật của bạn)
-GEMINI_API_KEY = "AIzaSy..." 
+# 🔑 Dán Groq API Key bảo mật của bạn vào đây
+GROQ_API_KEY = "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"
+client = Groq(api_key=GROQ_API_KEY)
 
-# Khởi tạo client kết nối Gemini AI (Theo chuẩn SDK google-genai mới nhất năm 2026)
-try:
-    ai_client = genai.Client(api_key=GEMINI_API_KEY)
-except Exception as e:
-    print(f"Cảnh báo cấu hình AI: {e}")
-    ai_client = None
-
-# Cấu trúc dữ liệu nhận từ frontend
-class StudentLogin(BaseModel):
-    ho_ten: str
-    lop: str
-    truong: str
-
-class ChatMessage(BaseModel):
-    message: str
-
-# 1. API Đăng nhập và tạo file dữ liệu
-@app.post("/api/login")
-async def login(student: StudentLogin):
-    if not student.ho_ten or not student.lop or not student.truong:
-        raise HTTPException(status_code=400, detail="Vui lòng điền đầy đủ thông tin!")
+# =====================================================================
+# KHU VỰC Ô LƯU TRỮ Ý TƯỞNG SƯ PHẠM RIÊNG CHO TỪNG MÔN HỌC
+# (Sau này bạn có ý tưởng môn nào, mình sẽ viết code dán đè vào ô môn đó)
+# =====================================================================
+SUBJECT_RULES = {
     
-    data_file = "hoc_sinh.json"
-    student_data = {
-        "ho_ten": student.ho_ten,
-        "lop": student.lop,
-        "truong": student.truong,
-        "ai_dependency_index": 0,
-        "chat_count": 0
-    }
-    
-    with open(data_file, "w", encoding="utf-8") as f:
-        json.dump(student_data, f, ensure_ascii=False, indent=4)
-        
-    return {"status": "success", "message": f"Chào mừng {student.ho_ten} đã đăng nhập thành công!"}
+    # 📌 Ô MÔN NGỮ VĂN
+    "Ngữ Văn": """
+    - Thuật ngữ: Cảm thụ văn học, dàn ý, hình tượng nghệ thuật, biện pháp tu từ, ngữ cảnh sáng tác.
+    - Quy tắc: Tuyệt đối không dùng từ "Bài toán/Giải bài". Không viết bài văn mẫu. Khi học sinh bí, gợi ý 1 nét đẹp nghệ thuật rồi đặt câu hỏi gợi mở ngắn.
+    """,
 
-# 2. API Lấy thông tin học sinh hiện tại để hiển thị lời chào trên Dashboard
-@app.get("/api/student-info")
-async def get_student_info():
-    data_file = "hoc_sinh.json"
-    if not os.path.exists(data_file):
-        raise HTTPException(status_code=404, detail="Chưa có dữ liệu học sinh. Hãy đăng nhập trước!")
-    
-    with open(data_file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    return data
+    # 📌 Ô MÔN TOÁN
+    "Toán": """
+    - Thuật ngữ: Điều kiện xác định, giả thiết, hằng đẳng thức, biến đổi tương đương, phương trình.
+    - Quy tắc: Không cho đáp án số cuối cùng. Hỏi học sinh về điều kiện xác định hoặc công thức cốt lõi trước.
+    """,
 
-# 3. API xử lý Chat với Gemini AI và tăng chỉ số đếm số lần chat
-@app.post("/api/chat")
-async def chat_with_gemini(chat: ChatMessage):
-    data_file = "hoc_sinh.json"
-    if not os.path.exists(data_file):
-        raise HTTPException(status_code=400, detail="Vui lòng đăng nhập trước khi chat!")
-    
-    # Đọc dữ liệu cũ lên để cập nhật số lần chat (Hành vi học tập)
-    with open(data_file, "r", encoding="utf-8") as f:
-        student_data = json.load(f)
-    
-    # Cộng dồn số lần chat của học sinh
-    student_data["chat_count"] += 1
-    
-    # Tính toán nhanh chỉ số Lệ thuộc AI tượng trưng (Sẽ nâng cấp công thức khoa học ở các bước sau)
-    # Ví dụ: Cứ chat thêm 1 lần thì độ lệ thuộc tăng lên 5%
-    student_data["ai_dependency_index"] = min(100, student_data["chat_count"] * 5)
-    
-    # Ghi lại dữ liệu mới vào file
-    with open(data_file, "w", encoding="utf-8") as f:
-        json.dump(student_data, f, ensure_ascii=False, indent=4)
+    # 📌 Ô MÔN VẬT LÝ
+    "Vật Lý": """
+    - Thuật ngữ: Lực tác dụng, gia tốc, vận tốc, ma sát, định luật Newton, bảo toàn năng lượng.
+    - Quy tắc: Đặt câu hỏi phân tích hiện tượng/lực trước khi đi vào tính toán. Nhắc học sinh chú ý đổi đơn vị đo.
+    """,
 
-    # Gọi Gemini AI thật xử lý câu hỏi câu trả lời
-    if not GEMINI_API_KEY or GEMINI_API_KEY == "AIzaSy...":
-        return {"reply": f"[Chế độ Demo] Bạn vừa hỏi: '{chat.message}'. Hãy cấu hình API Key thật ở main.py để nhận phản hồi từ Gemini nhé!"}
+    # 📌 Ô MÔN HÓA HỌC
+    "Hóa Học": """
+    - Thuật ngữ: Phương trình hóa học, chất tham gia, sản phẩm, bảo toàn khối lượng/electron, số mol.
+    - Quy tắc: Hỏi học sinh về hiện tượng hoặc bản chất phản ứng trước khi hướng dẫn tính số mol.
+    """,
+
+    # 📌 Ô MÔN SINH HỌC
+    "Sinh Học": """
+    - Thuật ngữ: GEN, ADN, ARN, Protein, quy luật di truyền, biến dị, hệ sinh thái.
+    - Quy tắc: Gợi mở qua cơ chế di truyền và sơ đồ tư duy.
+    """,
+
+    # 📌 Ô MÔN LỊCH SỬ
+    "Lịch Sử": """
+    - Thuật ngữ: Bối cảnh lịch sử, nguyên nhân, diễn biến, ý nghĩa lịch sử, bài học kinh nghiệm.
+    - Quy tắc: Đặt câu hỏi so sánh hoặc phân tích nguyên nhân/kết quả, không tóm tắt sự kiện trọn gói.
+    """,
+
+    # 📌 Ô MÔN ĐỊA LÝ
+    "Địa Lý": """
+    - Thuật ngữ: Atlat địa lý, quy luật tự nhiên, biểu đồ, số liệu, vùng kinh tế.
+    - Quy tắc: Hướng dẫn khai thác Atlat và đọc bảng số liệu qua câu hỏi dẫn dắt.
+    """,
+
+    # 📌 Ô MÔN KINH TẾ & PHÁP LUẬT
+    "Kinh Tế & Pháp Luật": """
+    - Thuật ngữ: Quyền và nghĩa vụ, điều luật, quy luật cung cầu, thị trường, tình huống pháp lý.
+    - Quy tắc: Đặt câu hỏi xử lý tình huống thực tế đời sống.
+    """,
+
+    # 📌 Ô MÔN TIẾNG ANH
+    "Tiếng Anh": """
+    - Thuật ngữ: Grammar (Ngữ pháp), Vocabulary (Từ vựng), Tense (Thì), Structure (Cấu trúc).
+    - Quy tắc: Không dịch hộ đoạn văn dài. Chỉ ra từ chìa khóa hoặc cấu trúc chính, yêu cầu học sinh tự đặt câu.
+    """,
+
+    # 📌 Ô MÔN TIN HỌC
+    "Tin Học": """
+    - Thuật ngữ: Thuật toán, Input/Output, sơ đồ khối, vòng lặp, biến, kiểu dữ liệu.
+    - Quy tắc: TUYỆT ĐỐI KHÔNG viết mã code hoàn chỉnh. Chỉ gợi mở ý tưởng thuật toán từng bước.
+    """,
+
+    # 📌 Ô MÔN CÔNG NGHỆ
+    "Công Nghệ": """
+    - Thuật ngữ: Quy trình kỹ thuật, thiết kế, bản vẽ, dòng điện, công nghệ cao.
+    - Quy tắc: Gợi mở qua quy trình thực hành và sơ đồ nguyên lý.
+    """,
+
+    # 📌 Ô MÔN QPAN (QUỐC PHÒNG AN NINH)
+    "QPAN": """
+    - Thuật ngữ: Truyền thống quân đội, điều lệnh, phòng thủ dân sự, an ninh mạng, chủ quyền.
+    - Quy tắc: Đặt câu hỏi gợi mở nhận thức và kỹ năng bảo vệ an ninh.
+    """
+}
+
+
+@app.route('/')
+def home():
+    return render_template('dashboard.html')
+
+@app.route('/api/chat', methods=['POST'])
+def chat():
+    data = request.json
+    raw_message = data.get('message', '')
+    user_message = raw_message.strip().lower()
+    
+    # Nhận diện môn học thông minh từ tin nhắn chat của bạn
+    selected_subject = data.get('subject', 'Ngữ Văn')
+    if 'toán' in user_message:
+        selected_subject = 'Toán'
+    elif 'lý' in user_message or 'vật lý' in user_message:
+        selected_subject = 'Vật Lý'
+    elif 'hóa' in user_message or 'hóa học' in user_message:
+        selected_subject = 'Hóa Học'
+    elif 'sinh' in user_message or 'sinh học' in user_message:
+        selected_subject = 'Sinh Học'
+    elif 'anh' in user_message or 'tiếng anh' in user_message:
+        selected_subject = 'Tiếng Anh'
+    elif 'văn' in user_message or 'ngữ văn' in user_message:
+        selected_subject = 'Ngữ Văn'
+
+    # 1. Xử lý câu chào mở đầu xã giao
+    greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'chào ai', 'chào trợ lý', 'xin chào']
+    if user_message in greetings:
+        reply_text = f"Chào em! Thầy/Cô là Trợ lý Sư phạm môn {selected_subject}. Hôm nay em muốn cùng thầy/cô trao đổi và chinh phục bài tập nào vậy nhỉ?"
+        return jsonify({'reply': reply_text})
+
+    # 2. Lấy bộ quy tắc chuẩn theo môn học đã được nhận diện
+    specific_rule = SUBJECT_RULES.get(selected_subject, "Gợi mở ngắn gọn, không giải hộ.")
+    
+    # 3. System prompt hoàn chỉnh
+    system_prompt = f"""
+    Bạn là Giáo viên Sư phạm chuyên nghiệp môn {selected_subject} cấp THPT. 
+    Học sinh đang học môn: {selected_subject}.
+
+    ĐẶC THÙ VÀ BỘ LUẬT RIÊNG DÀNH CHO MÔN {selected_subject}:
+    {specific_rule}
+
+    HƯỚNG DẪN XÁC NHẬN MÔN:
+    - Hãy hào hứng xác nhận ngay bằng câu: "Tuyệt vời! Chúng ta sẽ cùng nhau ôn tập môn **{selected_subject}**. Em đang gặp khó khăn ở bài tập, câu hỏi hay vấn đề nào, hãy gửi cho thầy/cô nhé!"
+
+    QUY TẮC TƯƠNG TÁC BẮT BUỘC (SOCRATIC TUTORING):
+    1. Chuẩn ngữ cảnh môn {selected_subject}.
+    2. Trả lời cực kỳ ngắn gọn (dưới 70 từ), ngôn ngữ sư phạm ân cần, động viên.
+    3. Luôn kết thúc bằng DUY NHẤT 1 CÂU HỎI gợi mở để học sinh tự suy nghĩ. Tuyệt đối không giải hộ đáp án cuối cùng.
+    """
 
     try:
-        response = ai_client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=chat.message,
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": raw_message}
+            ],
+            temperature=0.4,
         )
-        return {"reply": response.text}
+        reply_text = completion.choices[0].message.content
+        return jsonify({'reply': reply_text})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi khi gọi Gemini AI: {str(e)}")
+        return jsonify({'reply': f"Lỗi kết nối AI: {str(e)}"}), 500
 
-# Điều hướng mặc định
-@app.get("/")
-async def read_index():
-    return FileResponse("index.html")
-
-app.mount("/", StaticFiles(directory="."), name="static")
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
