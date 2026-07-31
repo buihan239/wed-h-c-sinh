@@ -1,18 +1,21 @@
 from flask import Flask, render_template, request, jsonify
 from groq import Groq
+import os
 
 app = Flask(__name__, template_folder='.')
 
 # 🔑 Dán Groq API Key bảo mật của bạn vào đây
-GROQ_API_KEY = "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"
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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    ")
 client = Groq(api_key=GROQ_API_KEY)
+
+# 1. BỘ NHỚ HỘI THOẠI TẠM THỜI (Lưu ngữ cảnh theo phiên người dùng)
+conversation_histories = {}
 
 # =====================================================================
 # KHU VỰC Ô LƯU TRỮ Ý TƯỞNG SƯ PHẠM RIÊNG CHO TỪNG MÔN HỌC
-# (Sau này bạn có ý tưởng môn nào, mình sẽ viết code dán đè vào ô môn đó)
+# (Các ô môn học được giữ nguyên bản cấu trúc của bạn)
 # =====================================================================
 SUBJECT_RULES = {
-    
     # 📌 Ô MÔN NGỮ VĂN
     "Ngữ Văn": """
     - Thuật ngữ: Cảm thụ văn học, dàn ý, hình tượng nghệ thuật, biện pháp tu từ, ngữ cảnh sáng tác.
@@ -27,7 +30,7 @@ SUBJECT_RULES = {
 
     # 📌 Ô MÔN VẬT LÝ
     "Vật Lý": """
-    - Thuật ngữ: Lực tác dụng, gia tốc, vận tốc, ma sát, định luật Newton, bảo toàn năng lượng.
+    - Thuật ngữ: Lực tác động, gia tốc, vận tốc, ma sát, định luật Newton, bảo toàn năng lượng.
     - Quy tắc: Đặt câu hỏi phân tích hiện tượng/lực trước khi đi vào tính toán. Nhắc học sinh chú ý đổi đơn vị đo.
     """,
 
@@ -93,57 +96,85 @@ def home():
 
 @app.route('/api/chat', methods=['POST'])
 def chat():
-    data = request.json
-    raw_message = data.get('message', '')
-    user_message = raw_message.strip().lower()
-    
-    # Nhận trực tiếp môn học từ menu trên giao diện web gửi xuống
-    selected_subject = data.get('subject', 'Ngữ Văn')
-
-    # 1. Xử lý câu chào mở đầu xã giao
-    greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'chào ai', 'chào trợ lý', 'xin chào']
-    if user_message in greetings:
-        reply_text = f"Chào em! Thầy/Cô là Trợ lý Sư phạm môn {selected_subject}. Hôm nay em muốn cùng thầy/cô trao đổi và chinh phục bài tập nào vậy nhỉ?"
-        return jsonify({'reply': reply_text})
-
-    # 2. Lấy bộ quy tắc chuẩn theo môn học đã được nhận diện
-    specific_rule = SUBJECT_RULES.get(selected_subject, "Gợi mở ngắn gọn, không giải hộ.")
-    
-    # 3. System prompt hoàn chỉnh
-    system_prompt = f"""
-    Bạn là Giáo viên Sư phạm chuyên nghiệp môn {selected_subject} cấp THPT.
-    Học sinh đang học môn: {selected_subject}.
-
-    Đặc thù và bộ luật riêng dành cho môn {selected_subject}:
-    {specific_rule}
-
-    HƯỚNG DẪN GIAO TIẾP:
-    - Trò chuyện tự nhiên, trực tiếp đi thẳng vào nội dung học sinh đang hỏi hoặc trả lời. KHÔNG lặp lại câu chào hay câu xác nhận môn học ở đầu mỗi câu trả lời.
-    - Chuẩn ngữ cảnh môn {selected_subject}.
-    - Trả lời cực kỳ ngắn gọn (dưới 70 từ), ngôn ngữ sư phạm ân cần, động viên.
-    - Nếu học sinh trả lời là "không biết", "ko biết" hoặc lúng túng, bạn PHẢI chủ động giải thích rõ ràng và đưa ra đáp án/gợi ý cụ thể ngay lập tức, tuyệt đối không tiếp tục hỏi vặn lại học sinh.
-    - Luôn kết thúc bằng DUY NHẤT 1 CÂU HỎI gợi mở để học sinh tự suy nghĩ. Tuyệt đối không giải hộ đáp án.
-    """
-
     try:
+        data = request.json
+        raw_message = data.get('message', '').strip()
+        user_message = raw_message.lower()
+        
+        # Nhận trực tiếp môn học từ menu trên giao diện web gửi xuống
+        selected_subject = data.get('subject', 'Ngữ Văn')
+
+        # Sử dụng IP hoặc session giả lập để lưu bộ nhớ hội thoại riêng cho từng người dùng
+        session_id = request.remote_addr
+        if session_id not in conversation_histories:
+            conversation_histories[session_id] = []
+        
+        history = conversation_histories[session_id]
+
+        if not raw_message:
+            return jsonify({'reply': 'Vui lòng nhập nội dung câu hỏi!'})
+
+        # 1. Xử lý câu chào mở đầu xã giao
+        greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'chào ai', 'chào trợ lý', 'xin chào']
+        if user_message in greetings:
+            reply_text = f"Chào em! Thầy/Cô là Trợ lý Sư phạm môn {selected_subject}. Hôm nay em muốn cùng thầy/cô trao đổi và chinh phục bài tập nào vậy nhỉ?"
+            # Lưu vào lịch sử
+            history.append({"role": "user", "content": raw_message})
+            history.append({"role": "assistant", "content": reply_text})
+            return jsonify({'reply': reply_text})
+
+        # 2. Lấy bộ quy tắc chuẩn theo môn học đã được nhận diện từ dict SUBJECT_RULES của bạn
+        specific_rule = SUBJECT_RULES.get(selected_subject, "Gợi mở ngắn gọn, không giải hộ.")
+        
+        # 3. System prompt hoàn chỉnh (Đã khắc phục lỗi mất ngữ cảnh, cứng nhắc và không nhớ việc học sinh nói "không biết")
+        system_prompt = f"""
+        Bạn là Giáo viên Sư phạm chuyên nghiệp môn {selected_subject} cấp THPT.
+        Học sinh đang học môn: {selected_subject}.
+
+        Đặc thù và bộ luật riêng dành cho môn {selected_subject}:
+        {specific_rule}
+
+        HƯỚNG DẪN GIAO TIẾP VÀ XỬ LÝ:
+        - Tôn trọng ngữ cảnh hội thoại trước đó: Ghi nhớ toàn bộ lịch sử trò chuyện giữa bạn và học sinh để kết nối liền mạch.
+        - LINH HOẠT ĐỘ DÀI: Nếu học sinh hỏi câu hỏi lớn hoặc cần phân tích sâu, hãy trả lời đầy đủ, chi tiết, cấu trúc rõ ràng. Nếu học sinh hỏi ngắn, hãy trả lời súc tích.
+        - XỬ LÝ KHI HỌC SINH BÍ: Nếu học sinh trả lời là "không biết", "ko biết", lúng túng hoặc yêu cầu đáp án, BẠN PHẢI TỰ CHỦ ĐỘNG GIẢNG DẢI rõ ràng và đưa ra kiến thức/đáp án cụ thể ngay lập tức, tuyệt đối không tiếp tục hỏi vặn lại.
+        - Phong cách: Ngôn ngữ sư phạm ân cần, khích lệ, chuẩn xác theo đặc thù môn {selected_subject}.
+        """
+
+        # 4. Xây dựng payload đầy đủ gồm System Prompt + Lịch sử hội thoại + Câu hỏi mới nhất
+        messages_payload = [{"role": "system", "content": system_prompt}]
+        
+        # Nạp toàn bộ lịch sử trước đó vào để AI có bộ nhớ
+        for turn in history:
+            messages_payload.append(turn)
+            
+        # Nạp câu hỏi hiện tại
+        messages_payload.append({"role": "user", "content": raw_message})
+
+        # 5. Gọi API Groq với mô hình mạnh mẽ và bộ nhớ đầy đủ
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": raw_message}
-            ],
+            messages=messages_payload,
             temperature=0.4,
+            max_tokens=1500
         )
+        
         reply_text = completion.choices[0].message.content
+
+        # 6. Cập nhật lịch sử hội thoại
+        history.append({"role": "user", "content": raw_message})
+        history.append({"role": "assistant", "content": reply_text})
+        
+        # Giới hạn lịch sử lưu trữ tránh quá tải (giữ 20 tin nhắn gần nhất)
+        if len(history) > 20:
+            conversation_histories[session_id] = history[-20:]
+
         return jsonify({'reply': reply_text})
+
     except Exception as e:
         return jsonify({'reply': f"Lỗi kết nối AI: {str(e)}"}), 500
 
-import os
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
 @app.route('/notebook.html')
 def notebook():
     return render_template('notebook.html')
@@ -159,11 +190,11 @@ def analytics():
 @app.route('/profile.html')
 def profile():
     return render_template('profile.html')
+
 @app.route('/dashboard.html')
 def dashboard():
     return render_template('dashboard.html')
-# Đảm bảo đoạn này luôn nằm ở cuối cùng của file main.py
+
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
