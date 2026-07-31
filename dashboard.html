@@ -191,13 +191,15 @@
     async function sendMessage() {
         const inputField = document.getElementById('userInput');
         const chatBox = document.getElementById('chatBox');
+        const subjectSelect = document.getElementById('subject-select'); // Lấy ô chọn môn
         const messageText = inputField.value.trim();
+        const selectedSubject = subjectSelect ? subjectSelect.value : 'Ngữ Văn'; // Lấy tên môn đang chọn
 
         if (messageText === '') return;
 
         const userDiv = document.createElement('div');
         userDiv.className = 'message user';
-        userDiv.innerHTML = `<b>Em:</b> ${messageText}`;
+        userDiv.innerHTML = `<b>Bạn:</b> ${messageText}`;
         chatBox.appendChild(userDiv);
 
         inputField.value = '';
@@ -205,7 +207,7 @@
 
         const aiDiv = document.createElement('div');
         aiDiv.className = 'message ai';
-        aiDiv.innerHTML = `<span class="subject-tag">AI</span><br><i>Đang suy nghĩ...</i>`;
+        aiDiv.innerHTML = `<span class="subject-tag">AI (${selectedSubject})</span><br><i>Đang suy nghĩ...</i>`;
         chatBox.appendChild(aiDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -213,11 +215,14 @@
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: messageText })
+                body: JSON.stringify({ 
+                    message: messageText, 
+                    subject: selectedSubject // Gửi kèm môn học lên server Python
+                })
             });
 
             const data = await response.json();
-            aiDiv.innerHTML = `<span class="subject-tag">AI</span><br>${data.reply.replace(/\n/g, '<br>')}`;
+            aiDiv.innerHTML = `<span class="subject-tag">AI (${selectedSubject})</span><br>${data.reply.replace(/\n/g, '<br>')}`;
         } catch (error) {
             aiDiv.innerHTML = `<span class="subject-tag" style="background:#d32f2f">Lỗi</span><br>Không thể kết nối máy chủ Python!`;
         }
