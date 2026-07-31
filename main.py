@@ -11,9 +11,9 @@ conversation_histories = {}
 
 SUBJECT_RULES = {
     "Ngữ Văn": "Tuyệt đối không dùng từ 'Bài toán/Giải bài'. Không viết bài văn mẫu. Khi học sinh bí, gợi ý 1 nét nghệ thuật rồi đặt câu hỏi ngắn.",
-    "Toán": "QUAN TRỌNG: Chỉ đặt MỘT câu hỏi gợi mở bước đầu tiên (ví dụ: hỏi điều kiện của mẫu số hoặc căn thức) rồi DỪNG LẠI NGAY LẬP TỨC. TUYỆT ĐỐI KHÔNG tự giải tiếp, không đưa ra kết quả.",
+    "Toán": "QUAN TRỌNG: Chỉ đặt MỘT câu hỏi gợi mở bước đầu tiên rồi DỪNG LẠI NGAY. TUYỆT ĐỐI KHÔNG tự giải tiếp.",
     "Vật Lý": "QUAN TRỌNG: Chỉ đặt câu hỏi phân tích hiện tượng/công thức bước 1 rồi DỪNG LẠI. Không tự giải hộ.",
-    "Hóa Học": "QUAN TRỌNG: Chỉ hỏi học sinh về bản chất phản ứng bước 1 rồi DỪNG LẬP TỨC.",
+    "Hóa Học": "QUAN TRỌNG: Chỉ hỏi học sinh về bản chất phản ứng bước 1 rồi DỪNG LẠI.",
     "Sinh Học": "Gợi mở qua cơ chế di truyền, chỉ hỏi 1 ý rồi dừng lại chờ học sinh.",
     "Lịch Sử": "Đặt câu hỏi gợi ý sự kiện bước 1, không tóm tắt trọn gói.",
     "Địa Lý": "Hướng dẫn khai thác Atlat bước 1 bằng câu hỏi ngắn rồi dừng lại.",
@@ -23,7 +23,6 @@ SUBJECT_RULES = {
     "Công Nghệ": "Gợi mở quy trình bước 1 rồi dừng lại.",
     "QPAN": "Đặt câu hỏi nhận thức bước 1 rồi dừng lại."
 }
-
 
 @app.route('/')
 def home():
@@ -35,20 +34,6 @@ def chat():
         data = request.json
         raw_message = data.get('message', '').strip()
         user_message = raw_message.lower()
-        selected_subject = data.get('subject', 'Ngữ Văn')
-
-        session_id = request.remote_addr
-        if session_id not in conversation_histories:
-            conversation_histories[session_id] = []
-        
-        @app.route('/api/chat', methods=['POST'])
-def chat():
-    try:
-        data = request.json
-        raw_message = data.get('message', '').strip()
-        user_message = raw_message.lower()
-        
-        # Lấy môn học từ request, nếu không có thì mặc định là Ngữ Văn
         selected_subject = data.get('subject', 'Ngữ Văn').strip()
 
         session_id = request.remote_addr
@@ -62,8 +47,7 @@ def chat():
 
         greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'xin chào']
         if user_message in greetings:
-            # Dùng chính biến selected_subject đã được cập nhật động từ giao diện
-            reply_text = f"Chào bạn! Mình là Trợ lý Sư phạm môn {selected_subject}. Hôm nay, bạn muốn cùng mình trao đổi và chinh phục bài tập nào vậy nhỉ?"
+            reply_text = f"Chào em! Thầy/Cô là Trợ lý Sư phạm môn {selected_subject}. Hôm nay em muốn cùng thầy/cô trao đổi và chinh phục bài tập nào vậy nhỉ?"
             history.append({"role": "user", "content": raw_message})
             history.append({"role": "assistant", "content": reply_text})
             return jsonify({'reply': reply_text})
@@ -78,16 +62,14 @@ def chat():
         1. Không bao giờ giải ngay.
         2. Luôn chia nhỏ thành từng bước.
         3. Mỗi lần chỉ hướng dẫn MỘT bước và đặt 1 câu hỏi ngắn gọn.
-        4. SAU KHI ĐẶT CÂU HỎI PHẢI DỪNG LẠI NGAY. TUYỆT ĐỐI KHÔNG tự trả lời câu hỏi của mình, không giải tiếp các bước sau. Bắt buộc phải chờ học sinh nhắn lại.
+        4. SAU KHI ĐẶT CÂU HỎI PHẢI DỪNG LẠI NGAY. TUYỆT ĐỐI KHÔNG tự trả lời câu hỏi của mình. Bắt buộc phải chờ học sinh nhắn lại.
         5. Nếu học sinh trả lời sai: Không nói 'Sai', hãy khen và gợi ý thêm.
         6. Nếu học sinh nói: không biết, em chịu, bí, ko biết => Mới giải thích thêm một chút.
         7. Tuyệt đối không viết đáp án hoàn chỉnh.
 
-       
-
-LUẬT RIÊNG MÔN HỌC:
-{specific_rule}
-"""
+        LUẬT RIÊNG MÔN HỌC:
+        {specific_rule}
+        """
 
         messages_payload = [{"role": "system", "content": system_prompt}]
         
