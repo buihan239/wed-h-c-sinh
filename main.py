@@ -47,7 +47,7 @@ def chat():
 
         greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'xin chào']
         if user_message in greetings:
-            reply_text = f"Chào em! Thầy/Cô là Trợ lý Sư phạm môn {selected_subject}. Hôm nay em muốn cùng thầy/cô trao đổi và chinh phục bài tập nào vậy nhỉ?"
+            reply_text = f"Chào bạn! Mình là Trợ lý AI môn {selected_subject}. Hôm nay, bạn muốn cùng mình trao đổi và chinh phục bài tập nào vậy nhỉ?"
             history.append({"role": "user", "content": raw_message})
             history.append({"role": "assistant", "content": reply_text})
             return jsonify({'reply': reply_text})
