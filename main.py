@@ -1,10 +1,10 @@
 from flask import Flask, render_template, request, jsonify
 from groq import Groq
 import os
-
+from documents import documents_bp
 app = Flask(__name__, template_folder='.')
-
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
+app.register_blueprint(documents_bp)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 client = Groq(api_key=GROQ_API_KEY)
 
 conversation_histories = {}
