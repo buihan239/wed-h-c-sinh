@@ -41,6 +41,20 @@ def chat():
         if session_id not in conversation_histories:
             conversation_histories[session_id] = []
         
+        @app.route('/api/chat', methods=['POST'])
+def chat():
+    try:
+        data = request.json
+        raw_message = data.get('message', '').strip()
+        user_message = raw_message.lower()
+        
+        # Lấy môn học từ request, nếu không có thì mặc định là Ngữ Văn
+        selected_subject = data.get('subject', 'Ngữ Văn').strip()
+
+        session_id = request.remote_addr
+        if session_id not in conversation_histories:
+            conversation_histories[session_id] = []
+        
         history = conversation_histories[session_id]
 
         if not raw_message:
@@ -48,8 +62,8 @@ def chat():
 
         greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'xin chào']
         if user_message in greetings:
-            # Sửa chữ "Ngữ Văn" thành biến {selected_subject} động
-            reply_text = f"Chào em! Thầy/Cô là Trợ lý Sư phạm môn {selected_subject}. Hôm nay em muốn cùng thầy/cô trao đổi và chinh phục bài tập nào vậy nhỉ?"
+            # Dùng chính biến selected_subject đã được cập nhật động từ giao diện
+            reply_text = f"Chào bạn! Mình là Trợ lý Sư phạm môn {selected_subject}. Hôm nay, bạn muốn cùng mình trao đổi và chinh phục bài tập nào vậy nhỉ?"
             history.append({"role": "user", "content": raw_message})
             history.append({"role": "assistant", "content": reply_text})
             return jsonify({'reply': reply_text})
