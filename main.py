@@ -140,8 +140,7 @@ def chat():
         - XỬ LÝ KHI HỌC SINH BÍ: Nếu học sinh trả lời là "không biết", "ko biết", lúng túng hoặc yêu cầu đáp án, BẠN PHẢI TỰ CHỦ ĐỘNG GIẢNG DẢI rõ ràng và đưa ra kiến thức/đáp án cụ thể ngay lập tức, tuyệt đối không tiếp tục hỏi vặn lại.
         - Phong cách: Ngôn ngữ sư phạm ân cần, khích lệ, chuẩn xác theo đặc thù môn {selected_subject}.
         """
-
-        # 4. Xây dựng payload đầy đủ gồm System Prompt + Lịch sử hội thoại + Câu hỏi mới nhất
+# 4. Xây dựng payload đầy đủ gồm System Prompt + Lịch sử hội thoại + Câu hỏi mới nhất
         messages_payload = [{"role": "system", "content": system_prompt}]
         
         # Nạp toàn bộ lịch sử trước đó vào để AI có bộ nhớ
