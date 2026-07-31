@@ -157,3 +157,24 @@ import os
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+    @app.route('/notebook.html')
+def notebook():
+    return render_template('notebook.html')
+
+@app.route('/upload.html')
+def upload():
+    return render_template('upload.html')
+
+@app.route('/analytics.html')
+def analytics():
+    return render_template('analytics.html')
+
+@app.route('/profile.html')
+def profile():
+    return render_template('profile.html')
+
+# Đảm bảo đoạn này luôn nằm ở cuối cùng của file main.py
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
