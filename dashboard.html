@@ -30,6 +30,62 @@
         button { padding: 12px 24px; background: #0084ff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; font-weight: bold; }
         button:hover { background: #006kd2; }
     </style>
+    /* Làm đẹp toàn bộ menu bên trái */
+.sidebar, nav, .menu {
+    background-color: #0f172a !important; /* Màu nền xanh đen hiện đại */
+    padding: 20px 15px;
+}
+
+/* Tiêu đề lớn ở menu */
+.sidebar h2, .sidebar h3, .sidebar h1 {
+    color: #ffffff !important;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 25px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+}
+
+/* Xóa bỏ dấu chấm tròn thô kệch của danh sách */
+.sidebar ul, nav ul {
+    list-style: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+/* Biến các mục menu thành các nút bấm sang trọng */
+.sidebar li, nav li {
+    margin-bottom: 8px;
+}
+
+/* Định dạng chữ và đường dẫn trong menu */
+.sidebar a, nav a {
+    color: #cbd5e1 !important; /* Màu chữ xám sáng dễ đọc */
+    text-decoration: none !important; /* Xóa gạch chân */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+/* Hiệu ứng khi di chuột vào mục menu */
+.sidebar a:hover, nav a:hover {
+    background-color: #1e293b !important; /* Sáng lên khi rê chuột */
+    color: #ffffff !important; /* Chữ trắng nổi bật */
+    transform: translateX(4px); /* Hiệu ứng dịch chuyển nhẹ sang phải */
+}
+
+/* Mục đang chọn (Active) */
+.sidebar a.active, nav a.active {
+    background-color: #2563eb !important; /* Màu xanh dương nổi bật */
+    color: #ffffff !important;
+    font-weight: bold;
+}
 </head>
 <body>
 
@@ -38,7 +94,7 @@
     <h3>HỌC THÔNG MINH VỚI AI</h3>
     <ul>
         <!-- Mục Chat -->
-        <li><a href="/dashboard.html" class="active">💬 Chat với Trợ lý Học tập AI</a></li>
+        <li><a href="/dashboard.html" class="active">💬 Chat với Trợ lý AI</a></li>
         
         <!-- Mục Notebook -->
         <li><a href="/notebook.html">📖 Học với Notebook</a></li>
