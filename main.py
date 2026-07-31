@@ -5,7 +5,7 @@ import os
 app = Flask(__name__, template_folder='.')
 
 # 🔑 Dán Groq API Key bảo mật của bạn vào đây
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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    ")
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 client = Groq(api_key=GROQ_API_KEY)
 
 # 1. BỘ NHỚ HỘI THOẠI TẠM THỜI (Lưu ngữ cảnh theo phiên người dùng)
