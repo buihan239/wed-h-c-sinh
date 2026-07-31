@@ -48,6 +48,7 @@ def chat():
 
         greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'xin chào']
         if user_message in greetings:
+            # Sửa chữ "Ngữ Văn" thành biến {selected_subject} động
             reply_text = f"Chào em! Thầy/Cô là Trợ lý Sư phạm môn {selected_subject}. Hôm nay em muốn cùng thầy/cô trao đổi và chinh phục bài tập nào vậy nhỉ?"
             history.append({"role": "user", "content": raw_message})
             history.append({"role": "assistant", "content": reply_text})
