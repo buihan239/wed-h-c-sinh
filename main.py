@@ -123,57 +123,82 @@ def chat():
             history.append({"role": "assistant", "content": reply_text})
             return jsonify({'reply': reply_text})
 
-        # 2. Lấy bộ quy tắc chuẩn theo môn học đã được nhận diện từ dict SUBJECT_RULES của bạn
-        specific_rule = SUBJECT_RULES.get(selected_subject, "Gợi mở ngắn gọn, không giải hộ.")
-        
-        # 3. System prompt hoàn chỉnh (Đã khắc phục lỗi mất ngữ cảnh, cứng nhắc và không nhớ việc học sinh nói "không biết")
-        system_prompt = f"""
-        Bạn là Giáo viên Sư phạm chuyên nghiệp môn {selected_subject} cấp THPT.
-        Học sinh đang học môn: {selected_subject}.
+        # 2. Lấy bộ quy tắc chuẩn theo môn học
+    specific_rule = SUBJECT_RULES.get(selected_subject, "\n- Gợi mở ngắn gọn, không giải hộ.")
 
-        Đặc thù và bộ luật riêng dành cho môn {selected_subject}:
-        {specific_rule}
+    # 3. System Prompt chuẩn Sư phạm Socratic
+    system_prompt = f"""
+    Bạn là Giáo viên Sư phạm AI chuyên nghiệp môn {selected_subject} cấp THPT.
 
-        HƯỚNG DẪN GIAO TIẾP VÀ XỬ LÝ:
-        - Tôn trọng ngữ cảnh hội thoại trước đó: Ghi nhớ toàn bộ lịch sử trò chuyện giữa bạn và học sinh để kết nối liền mạch.
-        - LINH HOẠT ĐỘ DÀI: Nếu học sinh hỏi câu hỏi lớn hoặc cần phân tích sâu, hãy trả lời đầy đủ, chi tiết, cấu trúc rõ ràng. Nếu học sinh hỏi ngắn, hãy trả lời súc tích.
-        - XỬ LÝ KHI HỌC SINH BÍ: Nếu học sinh trả lời là "không biết", "ko biết", lúng túng hoặc yêu cầu đáp án, BẠN PHẢI TỰ CHỦ ĐỘNG GIẢNG DẢI rõ ràng và đưa ra kiến thức/đáp án cụ thể ngay lập tức, tuyệt đối không tiếp tục hỏi vặn lại.
-        - Phong cách: Ngôn ngữ sư phạm ân cần, khích lệ, chuẩn xác theo đặc thù môn {selected_subject}.
-        """
-# 4. Xây dựng payload an toàn tuyệt đối
+    Mục tiêu của bạn KHÔNG PHẢI là trả lời câu hỏi.
+    Mục tiêu là giúp học sinh TỰ SUY LUẬN.
+
+    =========================
+    NGUYÊN TẮC SƯ PHẠM
+    =========================
+    1. Không bao giờ giải ngay.
+    2. Luôn chia nhỏ thành từng bước.
+    3. Mỗi lần chỉ hướng dẫn MỘT bước.
+    4. Sau mỗi bước phải dừng lại hỏi học sinh.
+    5. Chỉ khi học sinh trả lời mới sang bước tiếp theo.
+    6. Nếu học sinh trả lời sai:
+    - Không nói "Sai".
+    - Khen trước.
+    - Chỉ ra chỗ cần suy nghĩ.
+    - Gợi ý thêm.
+    7. Nếu học sinh nói: không biết, em chịu, bí, ko biết => Khi đó mới giải thích thêm một chút.
+    8. Tuyệt đối không viết đáp án hoàn chỉnh.
+    9. Không viết bài văn mẫu.
+    10. Không giải hết bài toán.
+
+    =========================
+    LUẬT RIÊNG MÔN HỌC
+    ========================={specific_rule}
+
+    =========================
+    PHONG CÁCH
+    =========================
+    - Ngắn gọn
+    - Dễ hiểu
+    - Thân thiện
+    - Giống giáo viên đang kèm riêng
+
+    =========================
+    Mỗi câu trả lời chỉ gồm:
+    - Một hướng dẫn
+    - Một câu hỏi
+    Không nhiều hơn.
+    """
+
+    try:
+        # 4. Xây dựng payload đầy đủ gồm System Prompt + Lịch sử hội thoại
         messages_payload = [{"role": "system", "content": system_prompt}]
         
-        # Nạp lịch sử hội thoại gần nhất (tối đa 6 tin nhắn) để AI có bộ nhớ
-        safe_history = history[-6:] if len(history) >= 6 else history
-        for turn in safe_history:
+        # Nạp lịch sử hội thoại trước đó để AI có bộ nhớ liên tục
+        for turn in history:
             if isinstance(turn, dict) and "role" in turn and "content" in turn:
                 messages_payload.append(turn)
-            
-        # Nạp câu hỏi hiện tại của học sinh
+                
+        # Nạp câu hỏi mới nhất của học sinh
         messages_payload.append({"role": "user", "content": raw_message})
 
-        # 5. Gọi API Groq
+        # 5. Gọi API Groq với temperature=0.2 để AI bớt sáng tạo và tuân thủ tuyệt đối quy tắc
         completion = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=messages_payload,
-            temperature=0.4,
-            max_tokens=1500
+            temperature=0.2,
+            max_tokens=1000
         )
         reply_text = completion.choices[0].message.content
 
-        # 6. Cập nhật lịch sử hội thoại
+        # 6. Lưu lại lịch sử hội thoại
         history.append({"role": "user", "content": raw_message})
         history.append({"role": "assistant", "content": reply_text})
-        
-        # Giới hạn lịch sử lưu trữ tránh quá tải (giữ 20 tin nhắn gần nhất)
-        if len(history) > 20:
-            conversation_histories[session_id] = history[-20:]
 
         return jsonify({'reply': reply_text})
 
     except Exception as e:
         return jsonify({'reply': f"Lỗi kết nối AI: {str(e)}"}), 500
-
 
 @app.route('/notebook.html')
 def notebook():
