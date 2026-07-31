@@ -97,20 +97,8 @@ def chat():
     raw_message = data.get('message', '')
     user_message = raw_message.strip().lower()
     
-    # Nhận diện môn học thông minh từ tin nhắn chat của bạn
+    # Nhận trực tiếp môn học từ menu trên giao diện web gửi xuống
     selected_subject = data.get('subject', 'Ngữ Văn')
-    if 'toán' in user_message:
-        selected_subject = 'Toán'
-    elif 'lý' in user_message or 'vật lý' in user_message:
-        selected_subject = 'Vật Lý'
-    elif 'hóa' in user_message or 'hóa học' in user_message:
-        selected_subject = 'Hóa Học'
-    elif 'sinh' in user_message or 'sinh học' in user_message:
-        selected_subject = 'Sinh Học'
-    elif 'anh' in user_message or 'tiếng anh' in user_message:
-        selected_subject = 'Tiếng Anh'
-    elif 'văn' in user_message or 'ngữ văn' in user_message:
-        selected_subject = 'Ngữ Văn'
 
     # 1. Xử lý câu chào mở đầu xã giao
     greetings = ['chào', 'hi', 'hello', 'chào thầy', 'chào cô', 'chào bạn', 'chào ai', 'chào trợ lý', 'xin chào']
