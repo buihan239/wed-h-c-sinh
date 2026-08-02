@@ -1,4 +1,5 @@
 from flask import Flask, render_template
+import os
 from documents import documents_bp
 from chat_module import chat_bp
 
