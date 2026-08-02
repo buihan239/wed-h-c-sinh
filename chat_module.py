@@ -93,3 +93,64 @@ def chat():
 
     except Exception as e:
         return jsonify({'reply': f"Lỗi hệ thống AI: {str(e)}"}), 500
+import os
+from flask import Blueprint, request, jsonify
+from werkzeug.utils import secure_filename
+
+# Thư mục riêng lưu file của Notebook
+NOTEBOOK_FOLDER = 'notebook_uploads'
+os.makedirs(NOTEBOOK_FOLDER, exist_ok=True)
+
+@chat_bp.route('/api/notebook/files', methods=['GET'])
+def get_notebook_files():
+    files = os.listdir(NOTEBOOK_FOLDER)
+    return jsonify({'files': files})
+
+@chat_bp.route('/api/notebook/upload', methods=['POST'])
+def upload_notebook_file():
+    if 'file' not in request.files:
+        return jsonify({'message': 'Không tìm thấy file!'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'message': 'Chưa chọn file!'}), 400
+    
+    filename = secure_filename(file.filename)
+    file.save(os.path.join(NOTEBOOK_FOLDER, filename))
+    return jsonify({'message': 'Tải tài liệu lên Notebook thành công!'})
+
+@chat_bp.route('/api/notebook/chat', methods=['POST'])
+def notebook_chat():
+    data = request.json
+    filename = data.get('filename')
+    message = data.get('message')
+
+    file_path = os.path.join(NOTEBOOK_FOLDER, filename)
+    file_content = ""
+    
+    # Đọc nội dung file (hỗ trợ file text/txt hoặc đọc tên file cơ bản)
+    try:
+        if os.path.exists(file_path):
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                file_content = f.read()[:4000] # Giới hạn 4000 ký tự đầu để AI đọc
+    except Exception as e:
+        file_content = "Không thể đọc nội dung file trực tiếp."
+
+    prompt = f"""
+    Bạn là trợ lý học tập AI thông minh. Dưới đây là nội dung tài liệu cá nhân của học sinh từ file '{filename}':
+    ---
+    {file_content}
+    ---
+    Câu hỏi của học sinh dựa trên tài liệu trên: {message}
+    Hãy trả lời ngắn gọn, chính xác, tập trung phân tích dựa vào tài liệu được cung cấp.
+    """
+
+    try:
+        completion = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.2
+        }
+        reply = completion.choices[0].message.content
+        return jsonify({'reply': reply})
+    except Exception as e:
+        return jsonify({'reply': f'Lỗi xử lý AI: {str(e)}'})
