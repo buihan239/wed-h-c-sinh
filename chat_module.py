@@ -1,13 +1,19 @@
 from flask import Blueprint, request, jsonify
 from groq import Groq
+from werkzeug.utils import secure_filename
 import os
+import docx  # Thư viện đọc file Word cho tính năng Notebook
 
 chat_bp = Blueprint('chat_bp', __name__)
 
+# Khai báo API Key và khởi tạo client
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 client = Groq(api_key=GROQ_API_KEY)
 
 conversation_histories = {}
+
+NOTEBOOK_FOLDER = 'notebook_uploads'
+os.makedirs(NOTEBOOK_FOLDER, exist_ok=True)
 
 SUBJECT_RULES = {
     "Ngữ Văn": "Tuyệt đối không dùng từ 'Bài toán/Giải bài'. Không viết bài văn mẫu. Khi học sinh bí, gợi ý 1 nét nghệ thuật rồi đặt câu hỏi ngắn.",
@@ -24,6 +30,7 @@ SUBJECT_RULES = {
     "QPAN": "Đặt câu hỏi nhận thức bước 1 rồi dừng lại."
 }
 
+# 1. API CHAT THEO MÔN HỌC (Giao diện chính)
 @chat_bp.route('/api/chat', methods=['POST'])
 def chat():
     try:
@@ -93,14 +100,9 @@ def chat():
 
     except Exception as e:
         return jsonify({'reply': f"Lỗi hệ thống AI: {str(e)}"}), 500
-import os
-from flask import Blueprint, request, jsonify
-from werkzeug.utils import secure_filename
 
-# Thư mục riêng lưu file của Notebook
-NOTEBOOK_FOLDER = 'notebook_uploads'
-os.makedirs(NOTEBOOK_FOLDER, exist_ok=True)
 
+# 2. CÁC API DÀNH CHO NOTEBOOK (Quản lý file & Chat với tài liệu)
 @chat_bp.route('/api/notebook/files', methods=['GET'])
 def get_notebook_files():
     files = os.listdir(NOTEBOOK_FOLDER)
@@ -127,21 +129,27 @@ def notebook_chat():
     file_path = os.path.join(NOTEBOOK_FOLDER, filename)
     file_content = ""
     
-    # Đọc nội dung file (hỗ trợ file text/txt hoặc đọc tên file cơ bản)
     try:
         if os.path.exists(file_path):
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                file_content = f.read()[:4000] # Giới hạn 4000 ký tự đầu để AI đọc
+            # Nếu là file Word (.docx) thì bóc tách bằng thư viện python-docx
+            if filename.endswith('.docx'):
+                doc = docx.Document(file_path)
+                fullText = [para.text for para in doc.paragraphs]
+                file_content = '\n'.join(fullText)[:6000]
+            else:
+                # Nếu là file văn bản thông thường (.txt)
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    file_content = f.read()[:6000]
     except Exception as e:
-        file_content = "Không thể đọc nội dung file trực tiếp."
+        file_content = f"Không thể đọc nội dung file: {str(e)}"
 
     prompt = f"""
     Bạn là trợ lý học tập AI thông minh. Dưới đây là nội dung tài liệu cá nhân của học sinh từ file '{filename}':
     ---
     {file_content}
     ---
-    Câu hỏi của học sinh dựa trên tài liệu trên: {message}
-    Hãy trả lời ngắn gọn, chính xác, tập trung phân tích dựa vào tài liệu được cung cấp.
+    Câu hỏi/Yêu cầu của học sinh: {message}
+    Hãy trả lời rõ ràng, chính xác, phân tích sâu sát vào nội dung văn bản trong tài liệu trên, tuyệt đối không bịa đặt thông tin ngoài tài liệu.
     """
 
     try:
