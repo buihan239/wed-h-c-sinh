@@ -144,12 +144,17 @@ def notebook_chat():
         file_content = f"Không thể đọc nội dung file: {str(e)}"
 
     prompt = f"""
-    Bạn là trợ lý học tập AI thông minh. Dưới đây là nội dung tài liệu cá nhân của học sinh từ file '{filename}':
+    Bạn là trợ lý học tập AI chuyên gia phân tích văn bản. 
+    Dựa hoàn toàn vào nội dung tài liệu '{filename}' sau đây:
     ---
     {file_content}
     ---
-    Câu hỏi/Yêu cầu của học sinh: {message}
-    Hãy trả lời rõ ràng, chính xác, phân tích sâu sát vào nội dung văn bản trong tài liệu trên, tuyệt đối không bịa đặt thông tin ngoài tài liệu.
+    Yêu cầu của học sinh: {message}
+    
+    Quy tắc phản hồi:
+    1. Trả lời trực trọng tâm, logic, sâu sắc và đúng bản chất vấn đề.
+    2. Không dài dòng, không lan man, trình bày ý rõ ràng, mạch lạc.
+    3. Tuyệt đối bám sát tài liệu được cung cấp, không bịa đặt.
     """
 
     try:
