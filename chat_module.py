@@ -149,7 +149,7 @@ def notebook_chat():
             model="llama-3.3-70b-versatile",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2
-        }
+        )
         reply = completion.choices[0].message.content
         return jsonify({'reply': reply})
     except Exception as e:
